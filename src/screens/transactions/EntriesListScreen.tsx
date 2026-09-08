@@ -116,7 +116,7 @@ export const EntriesListScreen: React.FC<{ navigation: any }> = ({ navigation })
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <Header
         title="Transaction History"
-        subtitle={`${totalRecords} entries • IN: +₹${formatINR(summary.totalCashIn)} | OUT: -₹${formatINR(summary.totalCashOut)}`}
+        subtitle={`${totalRecords} entries • IN: +${formatINR(summary.totalCashIn)} | OUT: -${formatINR(summary.totalCashOut)}`}
         rightAction={
           <TouchableOpacity
             activeOpacity={0.8}
@@ -192,7 +192,7 @@ export const EntriesListScreen: React.FC<{ navigation: any }> = ({ navigation })
               <Text style={styles.summaryCardLabelIn}>TOTAL CASH IN</Text>
             </View>
             <Text style={styles.summaryCardAmountIn}>
-              +₹{formatINR(summary.totalCashIn)}
+              +{formatINR(summary.totalCashIn)}
             </Text>
             <View style={styles.summaryCountRow}>
               <Text style={styles.summaryCountTextIn}>
@@ -220,7 +220,7 @@ export const EntriesListScreen: React.FC<{ navigation: any }> = ({ navigation })
               <Text style={styles.summaryCardLabelOut}>TOTAL CASH OUT</Text>
             </View>
             <Text style={styles.summaryCardAmountOut}>
-              -₹{formatINR(summary.totalCashOut)}
+              -{formatINR(summary.totalCashOut)}
             </Text>
             <View style={styles.summaryCountRow}>
               <Text style={styles.summaryCountTextOut}>
@@ -250,7 +250,7 @@ export const EntriesListScreen: React.FC<{ navigation: any }> = ({ navigation })
                 },
               ]}
             >
-              {summary.netFlow >= 0 ? '+' : '-'}₹{formatINR(Math.abs(summary.netFlow))}
+              {summary.netFlow >= 0 ? '+' : '-'}{formatINR(Math.abs(summary.netFlow))}
             </Text>
           </View>
           <View style={styles.netFlowRight}>

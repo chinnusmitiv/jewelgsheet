@@ -11,6 +11,8 @@ function initSpreadsheet() {
   if (companiesSheet.getLastRow() === 0) {
     companiesSheet.appendRow(['company_id', 'company_code', 'company_name', 'status', 'created_at', 'updated_at']);
     companiesSheet.getRange(1, 1, 1, 6).setFontWeight('bold').setBackground('#f1f5f9');
+  }
+  if (companiesSheet.getLastRow() <= 1) {
     var now = new Date().toISOString();
     companiesSheet.appendRow(['CBE', 'CBE', 'CBE Jewel Loan Center', 'ACTIVE', now, now]);
     companiesSheet.appendRow(['SMG', 'SMG', 'SMG Jewel Finance', 'ACTIVE', now, now]);
@@ -22,7 +24,10 @@ function initSpreadsheet() {
   if (usersSheet.getLastRow() === 0) {
     usersSheet.appendRow(['user_id', 'company_id', 'name', 'username', 'password_hash', 'role', 'status', 'created_at', 'updated_at']);
     usersSheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#f1f5f9');
+  }
+  if (usersSheet.getLastRow() <= 1) {
     var now = new Date().toISOString();
+    var defaultHash = typeof hashPassword === 'function' ? hashPassword('Password@123') : 'Password@123';
     usersSheet.appendRow(['USR-CBE-001', 'CBE', 'CBE Branch Manager', 'admin_cbe', defaultHash, 'ADMIN', 'ACTIVE', now, now]);
     usersSheet.appendRow(['USR-CBE-002', 'CBE', 'Staff Rajesh', 'staff_cbe', defaultHash, 'STAFF', 'ACTIVE', now, now]);
     usersSheet.appendRow(['USR-SMG-001', 'SMG', 'SMG Branch Admin', 'admin_smg', defaultHash, 'ADMIN', 'ACTIVE', now, now]);
@@ -109,4 +114,24 @@ function getOrCreateSheet(ss, sheetName) {
     sheet = ss.insertSheet(sheetName);
   }
   return sheet;
+}
+
+/**
+ * Helper to force re-seed all 6 default login accounts
+ */
+function seedDefaultUsers() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var usersSheet = getOrCreateSheet(ss, 'Users');
+  usersSheet.clear();
+  usersSheet.appendRow(['user_id', 'company_id', 'name', 'username', 'password_hash', 'role', 'status', 'created_at', 'updated_at']);
+  usersSheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#f1f5f9');
+  var now = new Date().toISOString();
+  var defaultHash = typeof hashPassword === 'function' ? hashPassword('Password@123') : 'Password@123';
+  usersSheet.appendRow(['USR-CBE-001', 'CBE', 'CBE Branch Manager', 'admin_cbe', defaultHash, 'ADMIN', 'ACTIVE', now, now]);
+  usersSheet.appendRow(['USR-CBE-002', 'CBE', 'Staff Rajesh', 'staff_cbe', defaultHash, 'STAFF', 'ACTIVE', now, now]);
+  usersSheet.appendRow(['USR-SMG-001', 'SMG', 'SMG Branch Admin', 'admin_smg', defaultHash, 'ADMIN', 'ACTIVE', now, now]);
+  usersSheet.appendRow(['USR-SMG-002', 'SMG', 'Staff Priya', 'staff_smg', defaultHash, 'STAFF', 'ACTIVE', now, now]);
+  usersSheet.appendRow(['USR-AJ-001', 'AJ', 'AJ Branch Admin', 'admin_aj', defaultHash, 'ADMIN', 'ACTIVE', now, now]);
+  usersSheet.appendRow(['USR-AJ-002', 'AJ', 'Staff Anoop', 'staff_aj', defaultHash, 'STAFF', 'ACTIVE', now, now]);
+  Logger.log('Seeded 6 default user accounts successfully!');
 }
