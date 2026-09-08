@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Jewel Loan Daily Cash Management",
+    "slug": "jewel-loan-daily-cash-management",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "backgroundColor": "#0f172a"
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
+}
