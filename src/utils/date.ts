@@ -21,6 +21,19 @@ export function formatDisplayDate(dateStr: string | undefined | null): string {
 }
 
 /**
+ * Formats a date string into voucher format e.g. "07.09.2026 (Monday)"
+ */
+export function formatVoucherDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return '';
+  try {
+    const d = dateStr.includes('T') ? parseISO(dateStr) : new Date(dateStr + 'T00:00:00');
+    return `${format(d, 'dd.MM.yyyy')} (${format(d, 'EEEE')})`;
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
  * Formats time string (e.g. "10:32 AM")
  */
 export function formatDisplayTime(dateOrTimeStr: string | undefined | null): string {

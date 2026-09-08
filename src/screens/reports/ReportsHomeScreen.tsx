@@ -126,7 +126,7 @@ export const ReportsHomeScreen: React.FC = () => {
               </View>
 
               <View style={styles.typeRow}>
-                <Text style={styles.typeLabel}>📈 Interest Received (Cash IN)</Text>
+                <Text style={styles.typeLabel}>📈 Release Interest (Cash IN)</Text>
                 <Text style={[styles.typeValue, { color: PALETTE.cashIn }]}>
                   {formatINR(reportData.typeBreakdown?.interestReceived ?? 0)}
                 </Text>

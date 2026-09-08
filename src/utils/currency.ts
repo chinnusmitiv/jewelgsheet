@@ -19,6 +19,26 @@ export function formatINR(amount: number | string | undefined | null, includeDec
 }
 
 /**
+ * Formats a number in Indian comma notation without currency prefix (e.g. 44,15,744)
+ */
+export function formatIndianNumber(amount: number | string | undefined | null): string {
+  if (amount === undefined || amount === null || isNaN(Number(amount))) {
+    return '0';
+  }
+
+  const num = Number(amount);
+  const isNegative = num < 0;
+  const absNum = Math.abs(num);
+
+  const formatted = absNum.toLocaleString('en-IN', {
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+  });
+
+  return `${isNegative ? '-' : ''}${formatted}`;
+}
+
+/**
  * Parses user input string to clean numeric amount
  */
 export function parseAmount(input: string): number {

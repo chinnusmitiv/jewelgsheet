@@ -15,11 +15,15 @@ import { useFinancial } from '../../context/FinancialContext';
 import { formatINR, parseAmount } from '../../utils/currency';
 import { formatDisplayDate, formatDisplayTime } from '../../utils/date';
 import { calculateCashDifference, validateClosingReason } from '../../utils/financialCalculations';
+import { printClosingReport, shareClosingReport } from '../../utils/printReport';
 import { Header } from '../../components/common/Header';
 import { Badge } from '../../components/common/Badge';
 import { CustomInput } from '../../components/common/CustomInput';
 import { CustomButton } from '../../components/common/CustomButton';
 import { ReopenDayModal } from '../../components/closing/ReopenDayModal';
+import { TouchableOpacity } from 'react-native';
+import { Transaction } from '../../types';
+import { apiRequest } from '../../services/api/apiClient';
 
 export const DailyClosingScreen: React.FC = () => {
   const { user } = useAuth();
@@ -29,6 +33,8 @@ export const DailyClosingScreen: React.FC = () => {
   const [differenceReason, setDifferenceReason] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [showReopenModal, setShowReopenModal] = useState<boolean>(false);
+  const [isPrinting, setIsPrinting] = useState<boolean>(false);
+  const [dayTransactions, setDayTransactions] = useState<Transaction[]>([]);
 
   const isClosed = dashboard?.dayStatus === 'CLOSED';
   const isAdmin = user?.role === 'ADMIN';
@@ -44,9 +50,57 @@ export const DailyClosingScreen: React.FC = () => {
     setError(null);
   }, [dashboard]);
 
+  // Fetch full transaction list for selected date
+  useEffect(() => {
+    const fetchDayTxns = async () => {
+      const res = await apiRequest('getTransactions', {
+        dateFrom: selectedDate,
+        dateTo: selectedDate,
+        status: 'ACTIVE',
+        pageSize: 100,
+      });
+      if (res.success && res.data) {
+        setDayTransactions(res.data.items || []);
+      }
+    };
+    fetchDayTxns();
+  }, [selectedDate, dashboard]);
+
   const expectedClosing = dashboard?.expectedClosingCash ?? 0;
   const currentActual = parseAmount(actualCashStr);
   const diffResult = calculateCashDifference(currentActual, expectedClosing);
+
+  const handlePrint = async () => {
+    if (!dashboard) return;
+    setIsPrinting(true);
+    await printClosingReport({
+      dashboard,
+      user,
+      selectedDate,
+      transactions: dayTransactions,
+      actualCash: currentActual,
+      difference: diffResult.difference,
+      differenceStatus: diffResult.status,
+      differenceReason: differenceReason.trim() || undefined,
+    });
+    setIsPrinting(false);
+  };
+
+  const handleSharePdf = async () => {
+    if (!dashboard) return;
+    setIsPrinting(true);
+    await shareClosingReport({
+      dashboard,
+      user,
+      selectedDate,
+      transactions: dayTransactions,
+      actualCash: currentActual,
+      difference: diffResult.difference,
+      differenceStatus: diffResult.status,
+      differenceReason: differenceReason.trim() || undefined,
+    });
+    setIsPrinting(false);
+  };
 
   const handleFinalize = async () => {
     if (!isAdmin) {
@@ -78,7 +132,14 @@ export const DailyClosingScreen: React.FC = () => {
           onPress: async () => {
             const success = await finalizeDay(currentActual, differenceReason.trim() || undefined);
             if (success) {
-              Alert.alert('Day Closed', 'Business day has been finalized and locked.');
+              Alert.alert(
+                'Day Closed Successfully',
+                'Business day has been finalized and locked. Would you like to print or save the closing voucher?',
+                [
+                  { text: 'Later', style: 'cancel' },
+                  { text: '🖨️ Print Voucher', onPress: handlePrint },
+                ]
+              );
             } else {
               setError('Failed to finalize day.');
             }
@@ -96,7 +157,21 @@ export const DailyClosingScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <Header title="Daily Closing" subtitle={formatDisplayDate(selectedDate)} />
+      <Header
+        title="Daily Closing"
+        subtitle={formatDisplayDate(selectedDate)}
+        rightAction={
+          dashboard ? (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handlePrint}
+              style={styles.headerPrintBtn}
+            >
+              <Text style={styles.headerPrintBtnText}>🖨️ Print</Text>
+            </TouchableOpacity>
+          ) : null
+        }
+      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -143,7 +218,7 @@ export const DailyClosingScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.tableRow}>
-              <Text style={styles.tableLabel}>Interest Received</Text>
+              <Text style={styles.tableLabel}>Release Interest</Text>
               <Text style={styles.tableValue}>
                 {formatINR(dashboard?.breakdown.interestReceived ?? 0)}
               </Text>
@@ -271,6 +346,38 @@ export const DailyClosingScreen: React.FC = () => {
               />
             )}
 
+            {/* Print & PDF Export Card */}
+            <View style={[styles.printCard, SHADOWS.sm]}>
+              <View style={styles.printHeaderRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.printCardTitle}>📄 Closing Audit Voucher</Text>
+                  <Text style={styles.printCardSub}>
+                    Official branch voucher with cash flow breakdown & authorized sign-offs
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.printActionRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handlePrint}
+                  disabled={isPrinting}
+                  style={styles.printBtnPrimary}
+                >
+                  <Text style={styles.printBtnTextPrimary}>🖨️ Print Voucher</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handleSharePdf}
+                  disabled={isPrinting}
+                  style={styles.printBtnSecondary}
+                >
+                  <Text style={styles.printBtnTextSecondary}>📤 Share PDF</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {/* Action Buttons */}
             {!isClosed ? (
               <CustomButton
@@ -313,6 +420,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: PALETTE.background,
+  },
+  headerPrintBtn: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: PALETTE.primaryBorder,
+    paddingHorizontal: SPACING.sm + 4,
+    paddingVertical: 6,
+    borderRadius: RADIUS.md,
+  },
+  headerPrintBtnText: {
+    color: PALETTE.primary,
+    fontSize: 12,
+    fontWeight: '800',
   },
   keyboardView: {
     flex: 1,
@@ -423,13 +543,67 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: PALETTE.primary,
   },
+  printCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    marginBottom: SPACING.lg,
+  },
+  printHeaderRow: {
+    marginBottom: SPACING.sm,
+  },
+  printCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: PALETTE.text,
+  },
+  printCardSub: {
+    fontSize: 11,
+    color: PALETTE.textSecondary,
+    marginTop: 2,
+  },
+  printActionRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  printBtnPrimary: {
+    flex: 1,
+    backgroundColor: PALETTE.primary,
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  printBtnTextPrimary: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  printBtnSecondary: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: PALETTE.primary,
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  printBtnTextSecondary: {
+    color: PALETTE.primary,
+    fontSize: 13,
+    fontWeight: '800',
+  },
   verificationCard: {
     backgroundColor: PALETTE.surface,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     borderWidth: 1,
     borderColor: PALETTE.border,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   },
   sectionHeading: {
     fontSize: 14,

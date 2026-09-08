@@ -45,7 +45,7 @@ const QUICK_ACTIONS: {
   },
   {
     type: 'INTEREST_RECEIVED',
-    title: 'Interest Recv',
+    title: 'Release Interest',
     direction: 'CASH_IN',
     icon: '📈',
     color: PALETTE.cashIn,

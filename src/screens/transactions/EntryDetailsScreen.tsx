@@ -145,7 +145,7 @@ export const EntryDetailsScreen: React.FC<{ navigation: any; route: any }> = ({
           </Text>
 
           <Text style={styles.typeText}>
-            {transaction.transactionType.replace(/_/g, ' ')}
+            {transaction.transactionType === 'INTEREST_RECEIVED' ? 'Release Interest' : transaction.transactionType.replace(/_/g, ' ')}
           </Text>
         </View>
 

@@ -19,6 +19,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
   const isVoided = transaction.status === 'VOIDED';
 
   const formatTypeName = (type: string) => {
+    if (type === 'INTEREST_RECEIVED') return 'Release Interest';
     return type.replace(/_/g, ' ');
   };
 

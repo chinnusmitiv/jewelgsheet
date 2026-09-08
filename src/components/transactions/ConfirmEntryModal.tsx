@@ -60,7 +60,7 @@ export const ConfirmEntryModal: React.FC<ConfirmEntryModalProps> = ({
             </Text>
             <View style={styles.badgeRow}>
               <Badge
-                label={transactionType.replace(/_/g, ' ')}
+                label={transactionType === 'INTEREST_RECEIVED' ? 'Release Interest' : transactionType.replace(/_/g, ' ')}
                 variant="neutral"
                 size="md"
               />

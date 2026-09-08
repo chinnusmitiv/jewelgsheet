@@ -24,7 +24,7 @@ import { ConfirmEntryModal } from '../../components/transactions/ConfirmEntryMod
 const TXN_TYPES: { type: TransactionType; label: string; icon: string }[] = [
   { type: 'JEWEL_LOAN', label: 'Jewel Loan', icon: '💍' },
   { type: 'JEWEL_RELEASE', label: 'Jewel Release', icon: '✨' },
-  { type: 'INTEREST_RECEIVED', label: 'Interest Recv', icon: '📈' },
+  { type: 'INTEREST_RECEIVED', label: 'Release Interest', icon: '📈' },
   { type: 'LOAN_INTEREST', label: 'Loan Interest', icon: '🏦' },
   { type: 'CASH_IN', label: 'Cash IN', icon: '💵' },
   { type: 'CASH_OUT', label: 'Cash OUT', icon: '💸' },

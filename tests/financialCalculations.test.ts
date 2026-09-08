@@ -6,6 +6,7 @@ import {
 } from '../src/utils/financialCalculations';
 import { mockDb } from '../src/services/mock/mockDatabase';
 import { Transaction, User } from '../src/types';
+import { generateClosingHtml } from '../src/utils/printReport';
 
 describe('Jewel Loan Master Specification - 12 Core Business Rule Tests (Section 67)', () => {
   // Test 1: Cash Calculation
@@ -279,5 +280,37 @@ describe('Jewel Loan Master Specification - 12 Core Business Rule Tests (Section
     const dashboard = mockDb.getDashboard(loginRes.user);
     expect(dashboard.companyId).toBe('AJ');
     expect(dashboard.companyName).toBe('AJ Jewel Capital');
+  });
+
+  // Test 15: Day Closing Print Report HTML Generation (2-Column Jewel Ledger Slip)
+  test('Test 15 — Day Closing Print Voucher: generates traditional 2-column jewel finance cash book voucher', () => {
+    const adminUser: User = {
+      userId: 'USR-CBE-001',
+      companyId: 'CBE',
+      name: 'CBE Branch Manager',
+      username: 'admin_cbe',
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    };
+
+    const dashboard = mockDb.getDashboard(adminUser);
+    const html = generateClosingHtml({
+      dashboard,
+      user: adminUser,
+      selectedDate: '2026-09-08',
+      actualCash: 128000,
+      difference: 0,
+      differenceStatus: 'BALANCED',
+    });
+
+    expect(html).toContain('CBE');
+    expect(html).toContain('OB');
+    expect(html).toContain('Jewel Release');
+    expect(html).toContain('Jewel Loan');
+    expect(html).toContain('Total');
+    expect(html).toContain('Cash');
+    expect(html).toContain('Difference');
+    expect(html).toContain('1,00,000'); // OB
+    expect(html).toContain('51,500'); // Total cash out
   });
 });
