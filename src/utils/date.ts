@@ -1,10 +1,75 @@
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from 'date-fns';
+import { format, subDays, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 
 /**
  * Returns today's business date formatted as YYYY-MM-DD
  */
 export function getTodayDateString(): string {
   return format(new Date(), 'yyyy-MM-dd');
+}
+
+/**
+ * Returns previous date formatted as YYYY-MM-DD
+ */
+export function getPreviousDate(dateStr: string): string {
+  try {
+    const d = dateStr.includes('T') ? parseISO(dateStr) : new Date(dateStr + 'T00:00:00');
+    return format(subDays(d, 1), 'yyyy-MM-dd');
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Returns next date formatted as YYYY-MM-DD
+ */
+export function getNextDate(dateStr: string): string {
+  try {
+    const d = dateStr.includes('T') ? parseISO(dateStr) : new Date(dateStr + 'T00:00:00');
+    return format(addDays(d, 1), 'yyyy-MM-dd');
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Checks if a date string is today
+ */
+export function isTodayDate(dateStr: string): boolean {
+  if (!dateStr) return false;
+  return dateStr === getTodayDateString();
+}
+
+/**
+ * Returns relative human label (e.g. "Today", "Yesterday", or "08 Sep 2026")
+ */
+export function getRelativeDateLabel(dateStr: string): string {
+  if (!dateStr) return '';
+  const todayStr = getTodayDateString();
+  if (dateStr === todayStr) return 'Today';
+  const yestStr = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+  if (dateStr === yestStr) return 'Yesterday';
+  return formatDisplayDate(dateStr);
+}
+
+/**
+ * Returns recent 7 past business dates for quick selection
+ */
+export function getRecentBusinessDates(count = 7): { dateStr: string; label: string; dayName: string }[] {
+  const list = [];
+  const today = new Date();
+  for (let i = 0; i < count; i++) {
+    const d = subDays(today, i);
+    const dateStr = format(d, 'yyyy-MM-dd');
+    let label = format(d, 'dd MMM');
+    if (i === 0) label = 'Today';
+    else if (i === 1) label = 'Yesterday';
+    list.push({
+      dateStr,
+      label,
+      dayName: format(d, 'EEE'),
+    });
+  }
+  return list;
 }
 
 /**

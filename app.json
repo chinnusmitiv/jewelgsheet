@@ -9,10 +9,18 @@
       "supportsTablet": true
     },
     "android": {
-      "backgroundColor": "#0f172a"
+      "package": "com.jewelloan.cashmanagement",
+      "versionCode": 1,
+      "backgroundColor": "#0f172a",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
-      "expo-asset"
+      "expo-asset",
+      "expo-font"
     ]
   }
 }

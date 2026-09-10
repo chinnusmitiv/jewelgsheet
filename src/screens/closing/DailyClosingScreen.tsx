@@ -13,7 +13,16 @@ import { PALETTE, RADIUS, SPACING, SHADOWS } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
 import { useFinancial } from '../../context/FinancialContext';
 import { formatINR, parseAmount } from '../../utils/currency';
-import { formatDisplayDate, formatDisplayTime } from '../../utils/date';
+import {
+  formatDisplayDate,
+  formatDisplayTime,
+  getPreviousDate,
+  getNextDate,
+  isTodayDate,
+  getRelativeDateLabel,
+  getRecentBusinessDates,
+  getTodayDateString,
+} from '../../utils/date';
 import { calculateCashDifference, validateClosingReason } from '../../utils/financialCalculations';
 import { printClosingReport, shareClosingReport } from '../../utils/printReport';
 import { Header } from '../../components/common/Header';
@@ -27,7 +36,7 @@ import { apiRequest } from '../../services/api/apiClient';
 
 export const DailyClosingScreen: React.FC = () => {
   const { user } = useAuth();
-  const { dashboard, selectedDate, finalizeDay, reopenDay, isSubmitting } = useFinancial();
+  const { dashboard, selectedDate, setSelectedDate, finalizeDay, reopenDay, isSubmitting } = useFinancial();
 
   const [actualCashStr, setActualCashStr] = useState<string>('');
   const [differenceReason, setDifferenceReason] = useState<string>('');
@@ -178,6 +187,103 @@ export const DailyClosingScreen: React.FC = () => {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Date Navigator Bar */}
+          <View style={[styles.dateNavCard, SHADOWS.sm]}>
+            <View style={styles.dateNavRow}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setSelectedDate(getPreviousDate(selectedDate))}
+                style={styles.dateNavArrowBtn}
+              >
+                <Text style={styles.dateNavArrowText}>◀ Prev Day</Text>
+              </TouchableOpacity>
+
+              <View style={styles.dateNavCenter}>
+                <Text style={styles.dateNavTitle}>
+                  {formatDisplayDate(selectedDate)}
+                </Text>
+                <View style={styles.relativeBadge}>
+                  <Text style={styles.relativeBadgeText}>
+                    {getRelativeDateLabel(selectedDate)}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setSelectedDate(getNextDate(selectedDate))}
+                disabled={isTodayDate(selectedDate)}
+                style={[
+                  styles.dateNavArrowBtn,
+                  isTodayDate(selectedDate) && styles.dateNavArrowDisabled,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dateNavArrowText,
+                    isTodayDate(selectedDate) && styles.dateNavArrowTextDisabled,
+                  ]}
+                >
+                  Next Day ▶
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Quick Date Chips */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickDateChipsRow}
+            >
+              {getRecentBusinessDates(7).map((d) => {
+                const isSelected = selectedDate === d.dateStr;
+                return (
+                  <TouchableOpacity
+                    key={d.dateStr}
+                    activeOpacity={0.8}
+                    onPress={() => setSelectedDate(d.dateStr)}
+                    style={[
+                      styles.quickDateChip,
+                      isSelected && styles.quickDateChipSelected,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.quickDateDayText,
+                        isSelected && styles.quickDateDayTextSelected,
+                      ]}
+                    >
+                      {d.dayName}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.quickDateLabelText,
+                        isSelected && styles.quickDateLabelTextSelected,
+                      ]}
+                    >
+                      {d.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            {!isTodayDate(selectedDate) && (
+              <View style={styles.pastDateNoticeRow}>
+                <Text style={styles.pastDateNoticeText}>
+                  Viewing closing: {formatDisplayDate(selectedDate)}
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setSelectedDate(getTodayDateString())}
+                  style={styles.jumpTodayBtn}
+                >
+                  <Text style={styles.jumpTodayText}>Return to Today ↺</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
           {/* Day Status Card */}
           <View style={[styles.statusCard, isClosed ? styles.closedCard : styles.openCard]}>
             <View style={styles.statusRow}>
@@ -662,5 +768,135 @@ const styles = StyleSheet.create({
   },
   reopenBtn: {
     marginTop: SPACING.sm,
+  },
+  // Date Navigator Styles
+  dateNavCard: {
+    backgroundColor: PALETTE.surface,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: PALETTE.border,
+    marginBottom: SPACING.md,
+  },
+  dateNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dateNavArrowBtn: {
+    backgroundColor: PALETTE.surfaceSubtle,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: PALETTE.border,
+  },
+  dateNavArrowDisabled: {
+    opacity: 0.35,
+    backgroundColor: '#f1f5f9',
+  },
+  dateNavArrowText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: PALETTE.primary,
+  },
+  dateNavArrowTextDisabled: {
+    color: PALETTE.textMuted,
+  },
+  dateNavCenter: {
+    alignItems: 'center',
+  },
+  dateNavTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: PALETTE.text,
+  },
+  dateNavSub: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: PALETTE.textSecondary,
+    marginTop: 1,
+  },
+  relativeBadge: {
+    backgroundColor: PALETTE.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    marginTop: 2,
+  },
+  relativeBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: PALETTE.primary,
+    textTransform: 'uppercase',
+  },
+  quickDateChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xs,
+  },
+  quickDateChip: {
+    backgroundColor: PALETTE.surfaceSubtle,
+    borderWidth: 1,
+    borderColor: PALETTE.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignItems: 'center',
+    minWidth: 54,
+  },
+  quickDateChipSelected: {
+    backgroundColor: PALETTE.primary,
+    borderColor: PALETTE.primary,
+  },
+  quickDateDayText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: PALETTE.textSecondary,
+    textTransform: 'uppercase',
+  },
+  quickDateDayTextSelected: {
+    color: '#ffffff',
+    opacity: 0.85,
+  },
+  quickDateLabelText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: PALETTE.text,
+    marginTop: 1,
+  },
+  quickDateLabelTextSelected: {
+    color: '#ffffff',
+  },
+  pastDateNoticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
+    marginTop: SPACING.sm,
+  },
+  pastDateNoticeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#b45309',
+    flex: 1,
+  },
+  jumpTodayBtn: {
+    backgroundColor: '#fde68a',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+    marginLeft: 6,
+  },
+  jumpTodayText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#92400e',
   },
 });
